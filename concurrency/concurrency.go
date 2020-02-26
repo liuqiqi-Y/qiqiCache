@@ -56,7 +56,7 @@ func (c *cache) get(key string) (ByteView, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.cc == nil {
-		return ByteView{}, fmt.Errorf("no cache\n")
+		return ByteView{}, fmt.Errorf("no cache struct")
 	}
 	v, err := c.cc.Get(key)
 	if err != nil {

@@ -2,6 +2,7 @@ package concurrency
 
 import (
 	"errors"
+	"log"
 	"sync"
 )
 
@@ -43,6 +44,7 @@ func NewGroup(name string, getter Getter, bytes int64) *Group {
 		mainCache: cache{cacheSize: bytes},
 	}
 	groups[name] = g
+	log.Println(name)
 	return g
 }
 
