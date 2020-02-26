@@ -77,7 +77,8 @@ func (c *Cache) Get(key string) (Value, error) {
 		kv, _ := ele.Value.(*element)
 		return kv.val, nil
 	}
-	return nil, nil
+	err := errors.New("has no this key")
+	return nil, err
 }
 
 // RemoveOldest 移除一个最旧的缓存
