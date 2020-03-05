@@ -1,8 +1,6 @@
 package serve
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -10,31 +8,20 @@ import (
 )
 
 const (
-	defaultBasePath = "/_qiqiCache/"
+	DefaultBasePath = "/_qiqiCache/"
 )
 
-type HTTPPool struct {
-	self     string
-	basePath string
-}
+type HTTPServer struct{}
 
-func NewHTTPPool(s string) *HTTPPool {
-	return &HTTPPool{
-		self:     s,
-		basePath: defaultBasePath,
-	}
-}
-func (p *HTTPPool) Log(format string, v ...interface{}) {
-	log.Printf("[Server: %s] %s\n", p.self, fmt.Sprintf(format, v...))
-}
-func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if !strings.HasPrefix(r.URL.Path, p.basePath) {
+var Server HTTPServer
+
+func (h *HTTPServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if !strings.HasPrefix(r.URL.Path, DefaultBasePath) {
 		http.Error(w, "wrong request path", http.StatusBadRequest)
 		return
 	}
-	p.Log("%s %s", r.Method, r.URL.Path)
 
-	parts := strings.SplitAfterN(r.URL.Path[len(p.basePath):], "/", 2)
+	parts := strings.SplitAfterN(r.URL.Path[len(DefaultBasePath):], "/", 2)
 	if len(parts) != 2 {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return

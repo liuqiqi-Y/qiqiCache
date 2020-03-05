@@ -4,6 +4,8 @@ import (
 	"errors"
 	"log"
 	"sync"
+
+	"github.com/liuqiqi-Y/qiqiCache/httppool"
 )
 
 // Getter 当缓存中没有时从数据源获取
@@ -24,6 +26,7 @@ type Group struct {
 	name      string
 	getter    Getter
 	mainCache cache
+	peers     httppool.PeerPicker
 }
 
 var (
@@ -63,7 +66,25 @@ func (g *Group) populateCache(key string, value ByteView) error {
 	}
 	return nil
 }
-func (g *Group) getlocally(key string) (ByteView, error) {
+func (g *Group) load(key string) (ByteView, error) {
+	if g.peers != nil {
+		if peer, ok := g.peers.PickPeer(key); ok {
+			if value, err := g.getFromPeer(peer, key); err == nil {
+				return value, nil
+			}
+			log.Println("[GeeCache] Failed to get from peer")
+		}
+	}
+	return g.getLocally(key)
+}
+func (g *Group) getFromPeer(peer httppool.PeerGetter, key string) (ByteView, error) {
+	bytes, err := peer.Get(g.name, key)
+	if err != nil {
+		return ByteView{}, err
+	}
+	return ByteView{b: bytes}, nil
+}
+func (g *Group) getLocally(key string) (ByteView, error) {
 	if key == "" {
 		err := errors.New("key is null")
 		return ByteView{}, err
@@ -86,7 +107,13 @@ func (g *Group) Get(key string) (ByteView, error) {
 	}
 	v, err := g.mainCache.get(key)
 	if err != nil {
-		return g.getlocally(key)
+		return g.load(key)
 	}
 	return v, nil
+}
+func (g *Group) RegisterPeers(peers httppool.PeerPicker) {
+	if g.peers != nil {
+		panic("RegisterPeerPicker called more than once")
+	}
+	g.peers = peers
 }
